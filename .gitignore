@@ -1,0 +1,30 @@
+# Build artifacts
+build/
+*.pbw
+*.o
+*.elf
+*.bin
+
+# Dependencies
+node_modules/
+.lock-waf*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Build artifacts
+*.a
+*.so
