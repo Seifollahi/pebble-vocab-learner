@@ -157,81 +157,120 @@ static void click_config_provider(void *context) {
 }
 
 static void main_window_load(Window *window) {
-  window_set_background_color(window, GColorBlack);
-  
-  // Clock layer
-  s_clock_layer = text_layer_create(GRect(0, 2, 180, 16));
-  text_layer_set_text(s_clock_layer, "00:00:00");
-  text_layer_set_font(s_clock_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
-  text_layer_set_text_alignment(s_clock_layer, GTextAlignmentCenter);
-  text_layer_set_text_color(s_clock_layer, GColorCyan);
-  text_layer_set_background_color(s_clock_layer, GColorClear);
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_clock_layer));
-  
-  // Category/Difficulty layer
-  s_category_layer = text_layer_create(GRect(0, 18, 180, 12));
-  text_layer_set_text(s_category_layer, "General | Beginner");
-  text_layer_set_font(s_category_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
-  text_layer_set_text_alignment(s_category_layer, GTextAlignmentCenter);
-  text_layer_set_text_color(s_category_layer, GColorLimerick);
-  text_layer_set_background_color(s_category_layer, GColorClear);
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_category_layer));
-  
+  Layer *window_layer = window_get_root_layer(window);
+  GRect bounds = layer_get_bounds(window_layer);
+  int y_offset = 5; // Initial y-offset for the first layer
+
+  window_set_background_color(window, GColorOxfordBlue); // Subtle dark blue background for modern look
+
+  // Draw a separator line function
+  void add_separator(int y) {
+    Layer *sep = layer_create(GRect(10, y, bounds.size.w - 20, 2));
+    layer_set_update_proc(sep, [](Layer *layer, GContext *ctx) {
+      graphics_context_set_fill_color(ctx, GColorDarkGray);
+      graphics_fill_rect(ctx, layer_get_bounds(layer), 1, GCornersAll);
+    });
+    layer_add_child(window_layer, sep);
+  }
+
   // Title layer
-  s_title_layer = text_layer_create(GRect(0, 32, 180, 14));
-  text_layer_set_text(s_title_layer, "📚 VOCAB 📚");
-  text_layer_set_font(s_title_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
+  s_title_layer = text_layer_create(GRect(5, y_offset, bounds.size.w - 10, 18));
+  text_layer_set_text(s_title_layer, "VOCABULARY");
+  text_layer_set_font(s_title_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_text_alignment(s_title_layer, GTextAlignmentCenter);
   text_layer_set_text_color(s_title_layer, GColorChromeYellow);
   text_layer_set_background_color(s_title_layer, GColorClear);
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_title_layer));
-  
-  // Term layer
-  s_term_layer = text_layer_create(GRect(10, 50, 160, 32));
+  layer_add_child(window_layer, text_layer_get_layer(s_title_layer));
+  y_offset += 20;
+  add_separator(y_offset);
+  y_offset += 6;
+
+  // Term highlight box
+  Layer *term_box = layer_create(GRect(10, y_offset, bounds.size.w - 20, 40));
+  layer_set_update_proc(term_box, [](Layer *layer, GContext *ctx) {
+    graphics_context_set_fill_color(ctx, GColorVividCerulean);
+    graphics_fill_rect(ctx, layer_get_bounds(layer), 6, GCornersAll);
+  });
+  layer_add_child(window_layer, term_box);
+
+  s_term_layer = text_layer_create(GRect(14, y_offset + 4, bounds.size.w - 28, 32));
   text_layer_set_text(s_term_layer, vocab_list[0].term);
-  text_layer_set_font(s_term_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+  text_layer_set_font(s_term_layer, fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK));
   text_layer_set_text_alignment(s_term_layer, GTextAlignmentCenter);
-  text_layer_set_text_color(s_term_layer, GColorVividCerulean);
+  text_layer_set_text_color(s_term_layer, GColorWhite);
   text_layer_set_background_color(s_term_layer, GColorClear);
   text_layer_set_overflow_mode(s_term_layer, GTextOverflowModeWordWrap);
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_term_layer));
-  
-  // Extra info layer
-  s_extra_layer = text_layer_create(GRect(3, 85, 174, 35));
+  layer_add_child(window_layer, text_layer_get_layer(s_term_layer));
+  y_offset += 46;
+  add_separator(y_offset);
+  y_offset += 6;
+
+  // Meaning highlight box
+  Layer *meaning_box = layer_create(GRect(10, y_offset, bounds.size.w - 20, 32));
+  layer_set_update_proc(meaning_box, [](Layer *layer, GContext *ctx) {
+    graphics_context_set_fill_color(ctx, GColorSpringBud);
+    graphics_fill_rect(ctx, layer_get_bounds(layer), 4, GCornersAll);
+  });
+  layer_add_child(window_layer, meaning_box);
+
+  s_extra_layer = text_layer_create(GRect(14, y_offset + 4, bounds.size.w - 28, 24));
   text_layer_set_text(s_extra_layer, "");
-  text_layer_set_font(s_extra_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_font(s_extra_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_text_alignment(s_extra_layer, GTextAlignmentCenter);
-  text_layer_set_text_color(s_extra_layer, GColorSpringBud);
+  text_layer_set_text_color(s_extra_layer, GColorBlack);
   text_layer_set_background_color(s_extra_layer, GColorClear);
   text_layer_set_overflow_mode(s_extra_layer, GTextOverflowModeWordWrap);
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_extra_layer));
-  
-  // Hint layer
-  s_hint_layer = text_layer_create(GRect(3, 120, 174, 12));
+  layer_add_child(window_layer, text_layer_get_layer(s_extra_layer));
+  y_offset += 38;
+  add_separator(y_offset);
+  y_offset += 6;
+
+  // Category/Difficulty layer
+  s_category_layer = text_layer_create(GRect(10, y_offset, bounds.size.w - 20, 16));
+  text_layer_set_text(s_category_layer, "General | Beginner");
+  text_layer_set_font(s_category_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_text_alignment(s_category_layer, GTextAlignmentLeft);
+  text_layer_set_text_color(s_category_layer, GColorLimerick);
+  text_layer_set_background_color(s_category_layer, GColorClear);
+  layer_add_child(window_layer, text_layer_get_layer(s_category_layer));
+
+  // Stats layer
+  s_stats_layer = text_layer_create(GRect(10, y_offset, bounds.size.w - 20, 16));
+  text_layer_set_text(s_stats_layer, "Learned: 0 | Reviewed: 0");
+  text_layer_set_font(s_stats_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_text_alignment(s_stats_layer, GTextAlignmentRight);
+  text_layer_set_text_color(s_stats_layer, GColorMalachite);
+  text_layer_set_background_color(s_stats_layer, GColorClear);
+  layer_add_child(window_layer, text_layer_get_layer(s_stats_layer));
+  y_offset += 18;
+
+  // Clock layer
+  s_clock_layer = text_layer_create(GRect(10, y_offset, bounds.size.w - 20, 16));
+  text_layer_set_text(s_clock_layer, "00:00:00");
+  text_layer_set_font(s_clock_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
+  text_layer_set_text_alignment(s_clock_layer, GTextAlignmentLeft);
+  text_layer_set_text_color(s_clock_layer, GColorCyan);
+  text_layer_set_background_color(s_clock_layer, GColorClear);
+  layer_add_child(window_layer, text_layer_get_layer(s_clock_layer));
+
+  // Countdown layer
+  s_counter_layer = text_layer_create(GRect(10, y_offset, bounds.size.w - 20, 16));
+  text_layer_set_text(s_counter_layer, "Next in: 10:00");
+  text_layer_set_font(s_counter_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
+  text_layer_set_text_alignment(s_counter_layer, GTextAlignmentRight);
+  text_layer_set_text_color(s_counter_layer, GColorRed);
+  text_layer_set_background_color(s_counter_layer, GColorClear);
+  layer_add_child(window_layer, text_layer_get_layer(s_counter_layer));
+  y_offset += 18;
+
+  // Hint layer (button instructions)
+  s_hint_layer = text_layer_create(GRect(10, y_offset, bounds.size.w - 20, 16));
   text_layer_set_text(s_hint_layer, "[MIDDLE: reveal | UP/DOWN: nav]");
-  text_layer_set_font(s_hint_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_font(s_hint_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_text_alignment(s_hint_layer, GTextAlignmentCenter);
   text_layer_set_text_color(s_hint_layer, GColorOrange);
   text_layer_set_background_color(s_hint_layer, GColorClear);
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_hint_layer));
-  
-  // Stats layer
-  s_stats_layer = text_layer_create(GRect(0, 133, 180, 12));
-  text_layer_set_text(s_stats_layer, "Learned: 0 | Reviewed: 0");
-  text_layer_set_font(s_stats_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
-  text_layer_set_text_alignment(s_stats_layer, GTextAlignmentCenter);
-  text_layer_set_text_color(s_stats_layer, GColorMalachite);
-  text_layer_set_background_color(s_stats_layer, GColorClear);
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_stats_layer));
-  
-  // Counter layer
-  s_counter_layer = text_layer_create(GRect(0, 147, 180, 14));
-  text_layer_set_text(s_counter_layer, "Next in 10:00");
-  text_layer_set_font(s_counter_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
-  text_layer_set_text_alignment(s_counter_layer, GTextAlignmentCenter);
-  text_layer_set_text_color(s_counter_layer, GColorRed);
-  text_layer_set_background_color(s_counter_layer, GColorClear);
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_counter_layer));
+  layer_add_child(window_layer, text_layer_get_layer(s_hint_layer));
 }
 
 static void main_window_unload(Window *window) {
