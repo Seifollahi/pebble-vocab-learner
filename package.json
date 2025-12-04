@@ -1,12 +1,12 @@
 {
-  "name": "persian-watch",
+  "name": "pebble-vocab-learner",
   "author": "MakeAwesomeHappen",
   "version": "1.0.0",
   "keywords": ["pebble-app"],
   "private": true,
   "dependencies": {},
   "pebble": {
-    "displayName": "Persian Watch",
+    "displayName": "Vocab Learner",
     "uuid": "00000000-0000-0000-0000-000000000001",
     "sdkVersion": "3",
     "enableMultiJS": true,

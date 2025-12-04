@@ -105,7 +105,7 @@ pebble build
 
 ### Adjusting Timer
 
-In `src/c/myfirstproject.c`, change the `s_time_remaining` value:
+In `src/c/pebble_vocab_learner.c`, change the `s_time_remaining` value:
 
 ```c
 static int s_time_remaining = 600;  // 600 seconds = 10 minutes
@@ -116,9 +116,9 @@ static int s_time_remaining = 600;  // 600 seconds = 10 minutes
 ```
 vocab-learner/
 ├── src/c/
-│   ├── myfirstproject.c      # Main application
-│   └── vocab.h               # Vocabulary database
-├── wscript                   # Build configuration
+│   ├── pebble_vocab_learner.c      # Main application
+│   └── vocab.h                     # Vocabulary database
+├── wscript                         # Build configuration
 ├── package.json              # Project metadata
 ├── README.md                 # This file
 └── .gitignore                # Git ignore rules
@@ -207,7 +207,7 @@ For issues, questions, or suggestions:
 A: Yes! Edit `src/c/vocab.h` and add entries to the `vocab_list` array.
 
 **Q: Can I change the timer interval?**
-A: Yes! Modify `s_time_remaining = 600;` in `myfirstproject.c` to your desired seconds.
+A: Yes! Modify `s_time_remaining = 600;` in `pebble_vocab_learner.c` to your desired seconds.
 
 **Q: Will this work on my Pebble model?**
 A: Yes! The app is tested and compiled for all Pebble models.
