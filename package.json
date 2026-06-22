@@ -1,13 +1,13 @@
 {
   "name": "pebble_vocab_learner",
-  "author": "MakeAwesomeHappen",
+  "author": "Mo Seif",
   "version": "1.0.0",
   "keywords": ["pebble-app"],
   "private": true,
   "dependencies": {},
   "pebble": {
     "displayName": "Vocab Learner",
-    "uuid": "00000000-0000-0000-0000-000000000001",
+    "uuid": "445cd633-85d3-49ff-a7f3-b31cb61ec47f",
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
@@ -18,13 +18,28 @@
       "emery"
     ],
     "watchapp": {
-      "watchface": true
+      "watchface": false
     },
+    "menuIcon": "IMAGE_MENU_ICON",
+    "capabilities": ["configurable"],
     "messageKeys": [
-      "dummy"
+      "NOTIFICATIONS_ENABLED",
+      "NOTIFICATIONS_FREQUENCY",
+      "VIBRATION_ENABLED"
     ],
     "resources": {
-      "media": []
+      "media": [
+        {
+          "type": "raw",
+          "name": "VOCAB_DB",
+          "file": "vocab_db.json"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_MENU_ICON",
+          "file": "images/menu_icon.png"
+        }
+      ]
     }
   }
 }
