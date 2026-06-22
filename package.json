@@ -3,7 +3,7 @@
   "author": "Mo Seif",
   "version": "1.0.0",
   "keywords": ["pebble-app"],
-  "private": true,
+  "license": "MIT",
   "dependencies": {},
   "pebble": {
     "displayName": "Vocab Learner",
