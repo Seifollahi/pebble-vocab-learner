@@ -1,7 +1,7 @@
 {
   "name": "pebble_vocab_learner",
   "author": "Mo Seif",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "keywords": ["pebble-app"],
   "license": "MIT",
   "dependencies": {},
@@ -25,7 +25,10 @@
     "messageKeys": [
       "NOTIFICATIONS_ENABLED",
       "NOTIFICATIONS_FREQUENCY",
-      "VIBRATION_ENABLED"
+      "VIBRATION_ENABLED",
+      "DIFF_BASIC",
+      "DIFF_INTERMEDIATE",
+      "DIFF_ADVANCED"
     ],
     "resources": {
       "media": [

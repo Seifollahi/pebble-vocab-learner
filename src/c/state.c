@@ -5,6 +5,9 @@
 #define PERSIST_NOTIF_ENABLED 1
 #define PERSIST_NOTIF_FREQ 2
 #define PERSIST_VIBRATION 3
+#define PERSIST_DIFF_BASIC 4
+#define PERSIST_DIFF_INTERMEDIATE 5
+#define PERSIST_DIFF_ADVANCED 6
 #define PERSIST_SRS_BUCKETS 100
 #define PERSIST_SRS_TIMES 101
 
@@ -21,6 +24,9 @@ static time_t s_vocab_times[VOCAB_COUNT] = {0};
 static bool s_notif_enabled = true;
 static int s_notif_freq = 60;
 static bool s_vibration_enabled = true;
+static bool s_diff_basic = true;
+static bool s_diff_intermediate = true;
+static bool s_diff_advanced = true;
 
 static const int BUCKET_INTERVALS[] = {0, 600, 3600, 14400, 86400, 259200}; // in seconds
 #define MAX_BUCKET 5
@@ -35,6 +41,9 @@ void state_load_config(void) {
   if (persist_exists(PERSIST_VIBRATION)) {
     s_vibration_enabled = persist_read_bool(PERSIST_VIBRATION);
   }
+  if (persist_exists(PERSIST_DIFF_BASIC)) s_diff_basic = persist_read_bool(PERSIST_DIFF_BASIC);
+  if (persist_exists(PERSIST_DIFF_INTERMEDIATE)) s_diff_intermediate = persist_read_bool(PERSIST_DIFF_INTERMEDIATE);
+  if (persist_exists(PERSIST_DIFF_ADVANCED)) s_diff_advanced = persist_read_bool(PERSIST_DIFF_ADVANCED);
   
   if (persist_exists(PERSIST_SRS_BUCKETS)) {
     persist_read_data(PERSIST_SRS_BUCKETS, s_vocab_buckets, sizeof(s_vocab_buckets));
@@ -61,6 +70,19 @@ void state_set_vibration_enabled(bool enabled) {
   persist_write_bool(PERSIST_VIBRATION, enabled);
 }
 
+void state_set_difficulty_config(bool basic, bool interm, bool adv) {
+  s_diff_basic = basic;
+  s_diff_intermediate = interm;
+  s_diff_advanced = adv;
+  persist_write_bool(PERSIST_DIFF_BASIC, basic);
+  persist_write_bool(PERSIST_DIFF_INTERMEDIATE, interm);
+  persist_write_bool(PERSIST_DIFF_ADVANCED, adv);
+}
+
+bool state_get_diff_basic(void) { return s_diff_basic; }
+bool state_get_diff_intermediate(void) { return s_diff_intermediate; }
+bool state_get_diff_advanced(void) { return s_diff_advanced; }
+
 bool state_get_notification_enabled(void) { return s_notif_enabled; }
 int state_get_notification_frequency(void) { return s_notif_freq; }
 bool state_get_vibration_enabled(void) { return s_vibration_enabled; }
@@ -75,30 +97,43 @@ void state_init(void) {
 
 void state_jump_to_review(void) {
   time_t now = time(NULL);
-  int best_idx = s_current_vocab_index;
-  bool found = false;
+  
+  int candidates[VOCAB_COUNT];
+  int num_candidates = 0;
+  int all_valid[VOCAB_COUNT];
+  int num_all_valid = 0;
   
   for (int i = 0; i < (int)VOCAB_COUNT; i++) {
-    int idx = (s_current_vocab_index + i) % (int)VOCAB_COUNT;
-    if (s_vocab_times[idx] <= now) {
-      best_idx = idx;
-      found = true;
-      break;
+    int diff = vocab_list[i].difficulty;
+    bool allowed = (diff == 1 && s_diff_basic) || 
+                   (diff == 2 && s_diff_intermediate) || 
+                   (diff == 3 && s_diff_advanced);
+    if (!allowed) continue;
+    
+    all_valid[num_all_valid++] = i;
+    
+    if (s_vocab_times[i] <= now) {
+      candidates[num_candidates++] = i;
     }
   }
   
-  if (!found) {
-    // Just find the earliest one
-    time_t earliest = s_vocab_times[s_current_vocab_index];
-    for(int i=0; i<(int)VOCAB_COUNT; i++) {
-      if(s_vocab_times[i] < earliest) {
-        earliest = s_vocab_times[i];
-        best_idx = i;
+  if (num_candidates > 0) {
+    s_current_vocab_index = candidates[rand() % num_candidates];
+  } else if (num_all_valid > 0) {
+    // Just find the earliest one among allowed
+    time_t earliest = s_vocab_times[all_valid[0]];
+    s_current_vocab_index = all_valid[0];
+    for(int i=1; i<num_all_valid; i++) {
+      if(s_vocab_times[all_valid[i]] < earliest) {
+        earliest = s_vocab_times[all_valid[i]];
+        s_current_vocab_index = all_valid[i];
       }
     }
+  } else {
+    // Fallback if none are allowed
+    s_current_vocab_index = 0;
   }
   
-  s_current_vocab_index = best_idx;
   s_meaning_revealed = false;
   s_display_mode = 0;
 }
