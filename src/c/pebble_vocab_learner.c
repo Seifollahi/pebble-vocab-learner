@@ -71,6 +71,7 @@ static void click_config_provider(void *context) {
 
 static void init(void) {
   srand(time(NULL));
+  wakeup_cancel_all();
   state_load_config();
   state_init();
   ui_init();
