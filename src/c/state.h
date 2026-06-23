@@ -23,4 +23,8 @@ bool state_get_notification_enabled(void);
 int state_get_notification_frequency(void);
 void state_set_vibration_enabled(bool enabled);
 bool state_get_vibration_enabled(void);
+void state_set_difficulty_config(bool basic, bool intermediate, bool advanced);
+bool state_get_diff_basic(void);
+bool state_get_diff_intermediate(void);
+bool state_get_diff_advanced(void);
 void state_load_config(void);
