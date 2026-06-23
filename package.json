@@ -21,7 +21,7 @@
       "watchface": false
     },
     "menuIcon": "IMAGE_MENU_ICON",
-    "capabilities": ["configurable"],
+    "capabilities": ["configurable", "timeline"],
     "messageKeys": [
       "NOTIFICATIONS_ENABLED",
       "NOTIFICATIONS_FREQUENCY",

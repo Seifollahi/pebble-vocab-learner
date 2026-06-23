@@ -27,6 +27,7 @@ var configHTML = `
     <div class="item">
       <label>Notification Frequency</label>
       <select id="frequencySelect">
+        <option value="1">Every 1 Minute (Testing)</option>
         <option value="60">Every 1 Hour</option>
         <option value="240">Every 4 Hours</option>
         <option value="1440">Every 24 Hours</option>
@@ -98,6 +99,17 @@ function pushTimelinePins(frequencyMins) {
           "tinyIcon": "system://images/NOTIFICATION_FLAG",
           "body": "Tap to review a new word!"
         },
+        "reminders": [
+          {
+            "time": pinTime.toISOString(),
+            "layout": {
+              "type": "genericReminder",
+              "title": "Vocab Review Time",
+              "tinyIcon": "system://images/NOTIFICATION_FLAG",
+              "body": "Tap to review a new word!"
+            }
+          }
+        ],
         "actions": [
           {
             "title": "Open App",

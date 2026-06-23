@@ -8,8 +8,8 @@ A minimalist, highly effective vocabulary learning application built natively fo
 - **Ultra-Minimalist UI**: Designed with a pure OLED-friendly black background. Distractions are removed so 55% of the screen is dedicated entirely to the definition, ensuring maximum readability without squinting.
 - **Spaced Repetition System (SRS)**: Employs a true Leitner memory engine. The app learns what words you struggle with and spaces them out dynamically (from 10 minutes up to 3 days), ensuring optimal active recall.
 - **Offline First**: Entirely self-contained C implementation. The vocabulary database is baked natively into the `.pbw` binary, using virtually no heap memory and working perfectly without your phone.
-- **Background Wakeups**: Utilizes the Pebble Wakeup API to silently trigger a notification to remind you to review words.
-- **Highly Configurable**: Control notification frequency and toggle haptic vibrations directly from the Pebble companion app.
+- **Timeline Notifications**: Seamlessly integrates with the Pebble Timeline. Receive beautifully formatted popup notifications when it's time to review, allowing you to launch the app instantly or dismiss them for later.
+- **Highly Configurable**: Control notification frequency, filter words by difficulty (Basic, Intermediate, Advanced), and toggle haptic vibrations directly from the Pebble companion app.
 
 
 ## Build Instructions (For Developers)
