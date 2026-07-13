@@ -2,6 +2,9 @@
 # Build script for Pebble Vocab Learner
 # Handles automatic renaming of .pbw file
 
+echo "Generating vocab.h from resources/vocab_db.json..."
+python3 tools/generate_vocab.py || python tools/generate_vocab.py || exit 1
+
 echo "Building Pebble Vocab Learner..."
 pebble build "$@"
 

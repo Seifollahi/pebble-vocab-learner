@@ -3,6 +3,7 @@ name: Pebble Build
 on:
   push:
     branches: [ "main", "master" ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ "main", "master" ]
 
@@ -11,15 +12,25 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: rebble/pebble-sdk:latest
-    
+
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+
+    - name: Generate vocab.h from vocab_db.json
+      run: python3 tools/generate_vocab.py || python tools/generate_vocab.py
 
     - name: Build Pebble App
       run: pebble build
-      
+
+    - name: Rename artifact
+      run: |
+        for f in build/*.pbw; do
+          mv "$f" build/vocab_learner.pbw
+          break
+        done
+
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: pebble-vocab-learner-pbw
         path: build/*.pbw

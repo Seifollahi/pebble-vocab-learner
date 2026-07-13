@@ -9,14 +9,23 @@ void state_mark_learned(void);
 void state_mark_failed(void);
 void state_jump_to_review(void);
 
-void state_tick(void);
+void state_tick(void); // called once per minute
 
-int state_get_time_remaining(void);
 int state_get_current_index(void);
 bool state_is_meaning_revealed(void);
 int state_get_display_mode(void);
 int state_get_words_learned(void);
 int state_get_words_reviewed(void);
+int state_get_bucket(int index);
+int state_get_max_bucket(void);
+
+// Done state: true when no words are currently due for review
+bool state_is_all_caught_up(void);
+int state_get_seconds_until_next_due(void);
+
+// Launch counter (used to auto-hide onboarding hints)
+int state_get_launch_count(void);
+void state_register_launch(void);
 
 void state_set_notification_config(bool enabled, int frequency_mins);
 bool state_get_notification_enabled(void);
