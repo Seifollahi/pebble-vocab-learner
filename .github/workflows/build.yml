@@ -19,8 +19,19 @@ jobs:
     - name: Generate vocab.h from vocab_db.json
       run: python3 tools/generate_vocab.py || python tools/generate_vocab.py
 
-    - name: Disable pebble-tool analytics prompt
-      run: mkdir -p "$HOME/.pebble-sdk" && touch "$HOME/.pebble-sdk/NO_TRACKING"
+    - name: Set up Pebble SDK core
+      run: |
+        mkdir -p "$HOME/.pebble-sdk"
+        touch "$HOME/.pebble-sdk/NO_TRACKING"
+        # Actions overrides $HOME, so any SDK baked into the image is invisible;
+        # reuse it if present, otherwise install the archived 4.3 core
+        # (the original download server is long dead).
+        if [ -d /root/.pebble-sdk/SDKs ]; then
+          cp -r /root/.pebble-sdk/. "$HOME/.pebble-sdk/"
+        fi
+        if ! pebble sdk list 2>/dev/null | grep -q "4\."; then
+          yes | pebble sdk install https://github.com/aveao/PebbleArchive/raw/master/SDKCores/sdk-core-4.3.tar.bz2
+        fi
 
     - name: Build Pebble App
       run: pebble build
