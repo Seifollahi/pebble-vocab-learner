@@ -57,3 +57,10 @@ jobs:
       with:
         files: build/vocab_learner.pbw
         body_path: RELEASE_NOTES.md
+
+    - name: Publish GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: build/vocab_learner.pbw
+        body_path: RELEASE_NOTES.md
