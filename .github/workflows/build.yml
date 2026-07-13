@@ -11,23 +11,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # needed to publish releases on tag pushes
+      contents: write
     container:
       image: rebble/pebble-sdk:latest
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Generate vocab.h from vocab_db.json
+    - name: Generate vocab resource from vocab_db.json
       run: python3 tools/generate_vocab.py || python tools/generate_vocab.py
 
     - name: Set up Pebble SDK core
       run: |
         mkdir -p "$HOME/.pebble-sdk"
         touch "$HOME/.pebble-sdk/NO_TRACKING"
-        # Actions overrides $HOME, so any SDK baked into the image is invisible;
-        # reuse it if present, otherwise install the archived 4.3 core
-        # (the original download server is long dead).
         if [ -d /root/.pebble-sdk/SDKs ]; then
           cp -r /root/.pebble-sdk/. "$HOME/.pebble-sdk/"
         fi
@@ -50,13 +47,6 @@ jobs:
       with:
         name: pebble-vocab-learner-pbw
         path: build/*.pbw
-
-    - name: Publish GitHub Release
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v2
-      with:
-        files: build/vocab_learner.pbw
-        body_path: RELEASE_NOTES.md
 
     - name: Publish GitHub Release
       if: startsWith(github.ref, 'refs/tags/')
