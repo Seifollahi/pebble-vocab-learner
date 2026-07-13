@@ -19,6 +19,9 @@ jobs:
     - name: Generate vocab.h from vocab_db.json
       run: python3 tools/generate_vocab.py || python tools/generate_vocab.py
 
+    - name: Disable pebble-tool analytics prompt
+      run: mkdir -p "$HOME/.pebble-sdk" && touch "$HOME/.pebble-sdk/NO_TRACKING"
+
     - name: Build Pebble App
       run: pebble build
 
