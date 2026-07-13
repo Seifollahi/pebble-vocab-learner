@@ -60,11 +60,11 @@ bool vocab_init(void) {
 
   if (resource_load_byte_range(s_handle, offsets_pos, (uint8_t *)s_offsets,
                                (count + 1) * sizeof(uint32_t)) !=
-      (int)((count + 1) * sizeof(uint32_t))) {
+      (count + 1) * sizeof(uint32_t)) {
     vocab_deinit();
     return false;
   }
-  if (resource_load_byte_range(s_handle, diffs_pos, s_diffs, count) != count) {
+  if (resource_load_byte_range(s_handle, diffs_pos, s_diffs, count) != (size_t)count) {
     vocab_deinit();
     return false;
   }
@@ -99,7 +99,7 @@ const VocabEntry* vocab_get(int index) {
   if (len == 0 || len >= RECORD_BUF_SIZE) return NULL;
 
   if (resource_load_byte_range(s_handle, s_data_base + start,
-                               (uint8_t *)s_record_buf, len) != (int)len) {
+                               (uint8_t *)s_record_buf, len) != (size_t)len) {
     return NULL;
   }
   s_record_buf[len] = '\0';  // safety terminator
