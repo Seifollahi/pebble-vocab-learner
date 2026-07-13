@@ -17,6 +17,11 @@ DST = ROOT / "src" / "c" / "vocab.h"
 
 REQUIRED = ("t", "m", "x", "e", "p", "d", "c")
 
+# The original Pebble (aplite) has a 24KB app region; the full word list's
+# const data does not fit. Aplite gets the first N words (which include the
+# complete v1 list, preserving migration), all other platforms get everything.
+APLITE_WORD_LIMIT = 50
+
 
 def c_escape(s: str) -> str:
     return s.replace("\\", "\\\\").replace('"', '\\"')
@@ -67,12 +72,16 @@ def main() -> int:
         "",
         "static const VocabEntry vocab_list[] = {",
     ]
-    for e in entries:
+    for i, e in enumerate(entries):
+        if i == APLITE_WORD_LIMIT:
+            lines.append("#ifndef PBL_PLATFORM_APLITE  // trimmed list for aplite's 24KB app region")
         lines.append(
             '  {"%s", "%s", "%s", "%s", "%s", %d, "%s"},'
             % (c_escape(e["t"]), c_escape(e["m"]), c_escape(e["x"]),
                c_escape(e["e"]), c_escape(e["p"]), e["d"], c_escape(e["c"]))
         )
+    if len(entries) > APLITE_WORD_LIMIT:
+        lines.append("#endif")
     lines += [
         "};",
         "",

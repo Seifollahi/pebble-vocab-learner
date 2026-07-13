@@ -66,6 +66,7 @@ static const VocabEntry vocab_list[] = {
   {"Bleak", "Cold, bare, or without hope", "The forecast for the harvest was bleak.", "Old Norse: bleikr", "BLEEK", 1, "General"},
   {"Concise", "Brief but complete", "Keep the summary concise.", "Latin: concidere", "kun-SYS", 1, "Academic"},
   {"Drowsy", "Sleepy and sluggish", "The warm room made her drowsy.", "Old English: drusian", "DROW-zee", 1, "General"},
+#ifndef PBL_PLATFORM_APLITE  // trimmed list for aplite's 24KB app region
   {"Earnest", "Serious and sincere", "He made an earnest promise to help.", "Old English: eornoste", "UR-nist", 1, "Emotions"},
   {"Flimsy", "Weak and poorly made", "The shed was too flimsy for the storm.", "Origin uncertain", "FLIM-zee", 1, "General"},
   {"Grim", "Very serious or gloomy", "The rescuers faced a grim task.", "Old English: grimm", "GRIM", 1, "General"},
@@ -250,6 +251,7 @@ static const VocabEntry vocab_list[] = {
   {"Austere", "Severely plain; strict", "The room was austere but elegant.", "Greek: austeros", "aw-STEER", 3, "Arts"},
   {"Gratuitous", "Uncalled for; unnecessary", "The critics panned its gratuitous scenes.", "Latin: gratuitus", "gruh-TOO-i-tus", 3, "Arts"},
   {"Meritocracy", "Advancement based on ability", "The firm claims to be a meritocracy.", "Latin: meritum", "mair-i-TOK-ruh-see", 3, "Business"},
+#endif
 };
 
 #define VOCAB_COUNT (sizeof(vocab_list) / sizeof(vocab_list[0]))
