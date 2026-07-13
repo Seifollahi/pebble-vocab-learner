@@ -12,18 +12,27 @@
 #define PERSIST_WORDS_LEARNED 7
 #define PERSIST_WORDS_REVIEWED 8
 #define PERSIST_LAUNCH_COUNT 9
+#define PERSIST_SRS_EPOCH 10
 
 #define PERSIST_SCHEMA_VERSION 99
-// v1 (legacy) stored the whole arrays as single blobs at these keys:
+// v1 (1.x) stored whole arrays as single blobs at these keys:
 #define PERSIST_V1_BUCKETS 100
 #define PERSIST_V1_TIMES 101
-// v2 stores chunked data. Pebble limits each persist value to 256 bytes,
-// so arrays are split across consecutive keys.
-#define PERSIST_BUCKETS_BASE 110
-#define PERSIST_TIMES_BASE 130
+// v2 (2.0) stored full uint8/int32 arrays chunked at these bases:
+#define PERSIST_V2_BUCKETS_BASE 110
+#define PERSIST_V2_TIMES_BASE 130
+// v3 (2.1+) stores one packed uint16 per word, chunked from this base.
+// Packed format: bits 0-2 = Leitner bucket, bits 3-15 = time until due in
+// 10-minute units, relative to the save timestamp (PERSIST_SRS_EPOCH).
+// Max interval is 3 days = 432 units, well below the 8191-unit ceiling, and
+// the epoch is refreshed on every save, so the format never overflows.
+// Cost: 2 bytes/word -> ~1900 words fit Pebble's 4KB persist quota.
+#define PERSIST_V3_PACKED_BASE 150
 
-#define SCHEMA_VERSION 2
+#define SCHEMA_VERSION 3
 #define CHUNK_BYTES 248
+#define PACK_UNIT_SECONDS 600
+#define PACK_MAX_UNITS 8191
 #define V1_VOCAB_COUNT 20
 
 // --- Session state -----------------------------------------------------------
@@ -37,11 +46,11 @@ static int s_launch_count = 0;
 static bool s_all_caught_up = false;
 static time_t s_next_due_time = 0;
 
-static uint8_t s_vocab_buckets[VOCAB_COUNT] = {0};
-static int32_t s_vocab_times[VOCAB_COUNT] = {0};
+static uint8_t s_vocab_buckets[MAX_VOCAB] = {0};
+static uint32_t s_vocab_times[MAX_VOCAB] = {0};
 
-// Static pools: at 200+ words these are too large for the 2KB app stack.
-static uint16_t s_due_pool[VOCAB_COUNT];
+// Static pools: too large for the 2KB app stack at hundreds of words.
+static uint16_t s_due_pool[MAX_VOCAB];
 static int s_due_pool_size = 0;
 
 static bool s_notif_enabled = true;
@@ -82,20 +91,53 @@ static void read_chunked(uint32_t base_key, void *data, size_t total) {
   }
 }
 
+static void delete_chunked(uint32_t base_key) {
+  uint32_t key = base_key;
+  while (persist_exists(key)) {
+    persist_delete(key);
+    key++;
+  }
+}
+
 static void save_srs_data(void) {
-  write_chunked(PERSIST_BUCKETS_BASE, s_vocab_buckets, sizeof(s_vocab_buckets));
-  write_chunked(PERSIST_TIMES_BASE, s_vocab_times, sizeof(s_vocab_times));
+  int n = vocab_count();
+  time_t epoch = time(NULL);
+  static uint16_t packed[MAX_VOCAB];
+
+  for (int i = 0; i < n; i++) {
+    uint32_t delta = (time_t)s_vocab_times[i] > epoch
+                     ? s_vocab_times[i] - (uint32_t)epoch : 0;
+    uint32_t units = (delta + PACK_UNIT_SECONDS - 1) / PACK_UNIT_SECONDS;
+    if (units > PACK_MAX_UNITS) units = PACK_MAX_UNITS;
+    packed[i] = (uint16_t)((s_vocab_buckets[i] & 0x7) | (units << 3));
+  }
+
+  persist_write_int(PERSIST_SRS_EPOCH, (int32_t)epoch);
+  write_chunked(PERSIST_V3_PACKED_BASE, packed, n * sizeof(uint16_t));
   persist_write_int(PERSIST_SCHEMA_VERSION, SCHEMA_VERSION);
 }
 
-static void migrate_v1_data(void) {
-  // v1 saved uint8_t[20] at key 100 and time_t[20] (4 bytes each) at key 101.
-  // The first 20 entries of the v2 word list are the same words in the same
-  // order, so progress carries over directly.
+static void load_srs_v3(void) {
+  int n = vocab_count();
+  time_t epoch = (time_t)persist_read_int(PERSIST_SRS_EPOCH);
+  static uint16_t packed[MAX_VOCAB];
+  memset(packed, 0, sizeof(packed));
+  read_chunked(PERSIST_V3_PACKED_BASE, packed, n * sizeof(uint16_t));
+
+  for (int i = 0; i < n; i++) {
+    s_vocab_buckets[i] = packed[i] & 0x7;
+    uint32_t units = packed[i] >> 3;
+    s_vocab_times[i] = units ? (uint32_t)epoch + units * PACK_UNIT_SECONDS : 0;
+  }
+}
+
+static void migrate_v1(void) {
+  // v1 saved uint8_t[20] at key 100 and int32[20] at key 101. The first 20
+  // words of the database are the same words in the same order.
   if (persist_exists(PERSIST_V1_BUCKETS)) {
     uint8_t old_buckets[V1_VOCAB_COUNT] = {0};
     persist_read_data(PERSIST_V1_BUCKETS, old_buckets, sizeof(old_buckets));
-    for (int i = 0; i < V1_VOCAB_COUNT && i < (int)VOCAB_COUNT; i++) {
+    for (int i = 0; i < V1_VOCAB_COUNT && i < vocab_count(); i++) {
       s_vocab_buckets[i] = old_buckets[i];
     }
     persist_delete(PERSIST_V1_BUCKETS);
@@ -103,12 +145,25 @@ static void migrate_v1_data(void) {
   if (persist_exists(PERSIST_V1_TIMES)) {
     int32_t old_times[V1_VOCAB_COUNT] = {0};
     persist_read_data(PERSIST_V1_TIMES, old_times, sizeof(old_times));
-    for (int i = 0; i < V1_VOCAB_COUNT && i < (int)VOCAB_COUNT; i++) {
-      s_vocab_times[i] = old_times[i];
+    for (int i = 0; i < V1_VOCAB_COUNT && i < vocab_count(); i++) {
+      s_vocab_times[i] = (uint32_t)old_times[i];
     }
     persist_delete(PERSIST_V1_TIMES);
   }
-  save_srs_data();
+}
+
+static void migrate_v2(void) {
+  // v2 stored the full arrays chunked: uint8 buckets and int32 times.
+  int n = vocab_count();
+  read_chunked(PERSIST_V2_BUCKETS_BASE, s_vocab_buckets, n);
+  static int32_t old_times[MAX_VOCAB];
+  memset(old_times, 0, sizeof(old_times));
+  read_chunked(PERSIST_V2_TIMES_BASE, old_times, n * sizeof(int32_t));
+  for (int i = 0; i < n; i++) {
+    s_vocab_times[i] = (uint32_t)old_times[i];
+  }
+  delete_chunked(PERSIST_V2_BUCKETS_BASE);
+  delete_chunked(PERSIST_V2_TIMES_BASE);
 }
 
 void state_load_config(void) {
@@ -130,11 +185,14 @@ void state_load_config(void) {
   if (persist_exists(PERSIST_LAUNCH_COUNT)) s_launch_count = persist_read_int(PERSIST_LAUNCH_COUNT);
 
   int version = persist_exists(PERSIST_SCHEMA_VERSION) ? persist_read_int(PERSIST_SCHEMA_VERSION) : 0;
-  if (version >= SCHEMA_VERSION) {
-    read_chunked(PERSIST_BUCKETS_BASE, s_vocab_buckets, sizeof(s_vocab_buckets));
-    read_chunked(PERSIST_TIMES_BASE, s_vocab_times, sizeof(s_vocab_times));
+  if (version >= 3) {
+    load_srs_v3();
+  } else if (version == 2) {
+    migrate_v2();
+    save_srs_data();
   } else {
-    migrate_v1_data();
+    migrate_v1();
+    save_srs_data();
   }
 }
 
@@ -185,11 +243,12 @@ static bool difficulty_allowed(int diff) {
 // filter) and compute the next upcoming due time for the done screen.
 static void rebuild_due_pool(void) {
   time_t now = time(NULL);
+  int n = vocab_count();
   s_due_pool_size = 0;
   s_next_due_time = 0;
 
-  for (int i = 0; i < (int)VOCAB_COUNT; i++) {
-    if (!difficulty_allowed(vocab_list[i].difficulty)) continue;
+  for (int i = 0; i < n; i++) {
+    if (!difficulty_allowed(vocab_difficulty(i))) continue;
 
     if ((time_t)s_vocab_times[i] <= now) {
       s_due_pool[s_due_pool_size++] = (uint16_t)i;
@@ -242,7 +301,7 @@ void state_mark_learned(void) {
     s_vocab_buckets[s_current_vocab_index]++;
   }
   int interval = BUCKET_INTERVALS[s_vocab_buckets[s_current_vocab_index]];
-  s_vocab_times[s_current_vocab_index] = (int32_t)(time(NULL) + interval);
+  s_vocab_times[s_current_vocab_index] = (uint32_t)(time(NULL) + interval);
   s_words_learned++;
   persist_write_int(PERSIST_WORDS_LEARNED, s_words_learned);
   save_srs_data();
@@ -254,7 +313,7 @@ void state_mark_learned(void) {
 void state_mark_failed(void) {
   if (s_all_caught_up) return;
   s_vocab_buckets[s_current_vocab_index] = 0;
-  s_vocab_times[s_current_vocab_index] = (int32_t)time(NULL);
+  s_vocab_times[s_current_vocab_index] = (uint32_t)time(NULL);
   save_srs_data();
 
   if (s_vibration_enabled) vibes_short_pulse();
@@ -262,7 +321,7 @@ void state_mark_failed(void) {
 }
 
 // Skip = "show me another due word". Respects both the SRS schedule and the
-// difficulty filter (v1 walked the raw list sequentially, bypassing both).
+// difficulty filter.
 void state_next_word(bool auto_advance) {
   pick_due_word(true);
   if (auto_advance && s_vibration_enabled) vibes_double_pulse();
@@ -312,7 +371,7 @@ int state_get_seconds_until_next_due(void) {
 }
 
 int state_get_bucket(int index) {
-  if (index < 0 || index >= (int)VOCAB_COUNT) return 0;
+  if (index < 0 || index >= vocab_count()) return 0;
   return s_vocab_buckets[index];
 }
 

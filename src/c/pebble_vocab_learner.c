@@ -3,6 +3,7 @@
 #include "ui.h"
 #include "state.h"
 #include "stats_ui.h"
+#include "vocab.h"
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *enabled_tuple = dict_find(iter, MESSAGE_KEY_NOTIFICATIONS_ENABLED);
@@ -84,6 +85,7 @@ static void click_config_provider(void *context) {
 static void init(void) {
   srand(time(NULL));
   wakeup_cancel_all();
+  vocab_init(); // load DB index from the resource bank before anything else
   state_load_config();
   state_register_launch();
   state_init();
@@ -112,6 +114,7 @@ static void deinit(void) {
   tick_timer_service_unsubscribe();
   stats_ui_deinit();
   ui_deinit();
+  vocab_deinit();
 }
 
 int main(void) {

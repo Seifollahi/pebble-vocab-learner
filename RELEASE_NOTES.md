@@ -1,3 +1,21 @@
+# Release Notes: v2.1.0
+
+This release removes the word-count ceiling. The vocabulary database moved out of the app binary (which is copied into the watch's limited RAM) and into the 256KB resource bank, read on demand — one word in memory at a time.
+
+## What's New in v2.1.0
+
+### 📦 Resource-Packed Vocabulary Database
+- Words are now packed into a binary resource (`vocab_db.bin`) generated from `resources/vocab_db.json` and read with `resource_load_byte_range()`. App RAM usage no longer grows with the word list.
+- **New capacity: ~1,800 words** on Pebble Time/2/Round (up from a few hundred), **400 words** on the original Pebble (up from 50). Growing the list is now just editing the JSON.
+- SRS progress is stored in a packed 2-bytes-per-word format (schema v3) so even a 1,800-word deck fits Pebble's 4KB persistent-storage quota. Existing v2.0 (and v1.x) progress migrates automatically.
+
+### Under the Hood
+- New `src/c/vocab.c` runtime accessor (offset index + difficulty table in a few KB of heap; single 512-byte record buffer).
+- `tools/generate_vocab.py` now emits the binary blob (plus a trimmed `~aplite` variant automatically when the list outgrows the original Pebble).
+- Word content is unchanged in this release (234 words) — this is the scalability release; big word-pack drops can now follow without any code changes.
+
+---
+
 # Release Notes: v2.0.0
 
 The biggest update yet: the spaced repetition engine now works both ways, the word database grew more than 10x, and the whole app got a battery and UX overhaul.

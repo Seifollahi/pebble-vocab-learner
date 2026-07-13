@@ -60,10 +60,10 @@ static void stats_window_appear(Window *window) {
   text_layer_set_text(s_reviewed_layer, s_reviewed_buf);
 
   int graduated = 0;
-  for (int i = 0; i < (int)VOCAB_COUNT; i++) {
+  for (int i = 0; i < vocab_count(); i++) {
     if (state_get_bucket(i) >= state_get_max_bucket()) graduated++;
   }
-  snprintf(s_graduated_buf, sizeof(s_graduated_buf), "Graduated: %d/%d", graduated, (int)VOCAB_COUNT);
+  snprintf(s_graduated_buf, sizeof(s_graduated_buf), "Graduated: %d/%d", graduated, vocab_count());
   text_layer_set_text(s_graduated_layer, s_graduated_buf);
 }
 

@@ -119,18 +119,28 @@ void ui_update_display(void) {
     set_extra_text_fitted(s_done_buf);
     text_layer_set_text(s_hint_layer, "");
   } else {
-    int idx = state_get_current_index();
-    text_layer_set_text(s_term_layer, vocab_list[idx].term);
+    // The entry's strings live in vocab.c's static record buffer; they stay
+    // valid until the next vocab_get(), i.e. until the next display update.
+    const VocabEntry *e = vocab_get(state_get_current_index());
+    if (!e) {
+      text_layer_set_text(s_term_layer, "Error");
+      set_extra_text_fitted("Could not read the vocabulary database.");
+      text_layer_set_text(s_hint_layer, "");
+      layer_mark_dirty(s_bucket_layer);
+      layer_mark_dirty(s_mode_layer);
+      return;
+    }
+    text_layer_set_text(s_term_layer, e->term);
 
     if (!state_is_meaning_revealed()) {
       set_extra_text_fitted("Press SELECT to reveal...");
       text_layer_set_text(s_hint_layer, show_hints ? "SELECT: reveal · UP/DN: skip" : "");
     } else {
       switch (state_get_display_mode()) {
-        case 0: set_extra_text_fitted(vocab_list[idx].meaning); break;
-        case 1: set_extra_text_fitted(vocab_list[idx].example); break;
-        case 2: set_extra_text_fitted(vocab_list[idx].etymology); break;
-        case 3: set_extra_text_fitted(vocab_list[idx].phonetic); break;
+        case 0: set_extra_text_fitted(e->meaning); break;
+        case 1: set_extra_text_fitted(e->example); break;
+        case 2: set_extra_text_fitted(e->etymology); break;
+        case 3: set_extra_text_fitted(e->phonetic); break;
       }
       text_layer_set_text(s_hint_layer, show_hints ? "HOLD SEL: know · DN: forgot" : "");
     }

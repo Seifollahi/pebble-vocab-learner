@@ -7,7 +7,7 @@ A minimalist, highly effective vocabulary learning application built natively fo
 ## Features
 - **Ultra-Minimalist UI**: Pure OLED-friendly black background with most of the screen dedicated to the definition. Button hints teach you the controls for your first 10 launches, then vanish. Tiny progress dots show each word's Leitner level and which view (meaning / example / origin / phonetic) you're on.
 - **True Spaced Repetition (SRS)**: A two-way Leitner memory engine. Hold `SELECT` when you know a word to space it out (10 minutes up to 3 days); hold `DOWN` when you've forgotten it to bring it back immediately. Skipping only draws from words that are actually due, and when nothing is due you get a satisfying "All caught up" screen with your next review time.
-- **234-Word Database**: Curated words across 8 categories and 3 difficulty levels, baked natively into the `.pbw` binary. `resources/vocab_db.json` is the single source of truth — `src/c/vocab.h` is generated at build time.
+- **Scalable Word Database**: Curated words across 8 categories and 3 difficulty levels, packed into the 256KB resource bank and read on demand — capacity for ~1,800 words without touching app RAM. `resources/vocab_db.json` is the single source of truth; `tools/generate_vocab.py` packs it into `vocab_db.bin` at build time.
 - **Offline First**: Entirely self-contained C implementation. No internet or phone connection needed to review.
 - **Battery Friendly**: Wakes the CPU once per minute, not once per second.
 - **Timeline Notifications**: Deduplicated timeline pins (stable slot IDs) pushed only when you save settings, and cleaned up when you disable them.
@@ -23,9 +23,9 @@ A minimalist, highly effective vocabulary learning application built natively fo
 | `HOLD UP` | Learning stats |
 
 ## Build Instructions (For Developers)
-The vocabulary header is generated from JSON before compiling:
+The vocabulary resource is generated from JSON before compiling:
 ```bash
-python3 tools/generate_vocab.py   # regenerates src/c/vocab.h
+python3 tools/generate_vocab.py   # regenerates resources/data/vocab_db.bin
 ```
 Then compile with the Rebble Docker SDK:
 ```bash
@@ -34,4 +34,4 @@ docker run --rm -v $PWD:/pebble rebble/pebble-sdk:latest /bin/bash -c "cd /pebbl
 Or use the helper script (runs both steps): `./build.sh`
 
 ### Adding words
-Edit `resources/vocab_db.json` (fields: `t` term, `m` meaning, `x` example, `e` etymology, `p` phonetic, `d` difficulty 1–3, `c` category) and rebuild. The persistence layer is versioned and chunked, so growing the list does not corrupt existing users' progress.
+Edit `resources/vocab_db.json` (fields: `t` term, `m` meaning, `x` example, `e` etymology, `p` phonetic, `d` difficulty 1–3, `c` category) and rebuild. Capacity: ~1,800 words (400 on the original Pebble — the generator produces a trimmed `~aplite` variant automatically). The persistence layer is versioned and packed (2 bytes/word), so growing the list does not corrupt existing users' progress.
