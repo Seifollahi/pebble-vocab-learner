@@ -33,6 +33,29 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     state_jump_to_review();
     ui_update_display();
   }
+
+  Tuple *reset = dict_find(iter, MESSAGE_KEY_RESET_PROGRESS);
+  if (reset && reset->value->int32 == 1) {
+    state_reset_progress();
+    ui_update_display();
+    if (state_get_vibration_enabled()) vibes_long_pulse();
+  }
+}
+
+// Push lifetime stats to the phone so the settings page can show them.
+static void send_stats_to_phone(void) {
+  DictionaryIterator *iter;
+  if (app_message_outbox_begin(&iter) != APP_MSG_OK) return;
+
+  int graduated = 0;
+  for (int i = 0; i < vocab_count(); i++) {
+    if (state_get_bucket(i) >= state_get_max_bucket()) graduated++;
+  }
+  dict_write_uint32(iter, MESSAGE_KEY_STAT_LEARNED, state_get_words_learned());
+  dict_write_uint32(iter, MESSAGE_KEY_STAT_REVIEWED, state_get_words_reviewed());
+  dict_write_uint32(iter, MESSAGE_KEY_STAT_GRADUATED, graduated);
+  dict_write_uint32(iter, MESSAGE_KEY_STAT_TOTAL, vocab_count());
+  app_message_outbox_send();
 }
 
 // MINUTE_UNIT instead of SECOND_UNIT: waking the CPU once a minute instead of
@@ -106,8 +129,8 @@ static void init(void) {
     }
   }
 
-  // Note: timeline pins are pushed by the JS side only when settings are
-  // saved (v1 re-requested pins on every launch, which spammed the timeline).
+  // Timeline pins are managed entirely by the JS side (stable day-pin IDs).
+  send_stats_to_phone();
 }
 
 static void deinit(void) {

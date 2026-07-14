@@ -201,6 +201,17 @@ void state_register_launch(void) {
   persist_write_int(PERSIST_LAUNCH_COUNT, s_launch_count);
 }
 
+void state_reset_progress(void) {
+  memset(s_vocab_buckets, 0, sizeof(s_vocab_buckets));
+  memset(s_vocab_times, 0, sizeof(s_vocab_times));
+  s_words_learned = 0;
+  s_words_reviewed = 0;
+  persist_write_int(PERSIST_WORDS_LEARNED, 0);
+  persist_write_int(PERSIST_WORDS_REVIEWED, 0);
+  save_srs_data();
+  state_jump_to_review();
+}
+
 int state_get_launch_count(void) { return s_launch_count; }
 
 void state_set_notification_config(bool enabled, int frequency_mins) {

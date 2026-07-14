@@ -1,7 +1,7 @@
 {
   "name": "pebble_vocab_learner",
   "author": "Mo Seif",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "A minimalist, highly effective vocabulary learning application built natively for the Pebble ecosystem.",
   "keywords": ["pebble-app"],
   "license": "MIT",
@@ -29,7 +29,12 @@
       "VIBRATION_ENABLED",
       "DIFF_BASIC",
       "DIFF_INTERMEDIATE",
-      "DIFF_ADVANCED"
+      "DIFF_ADVANCED",
+      "RESET_PROGRESS",
+      "STAT_LEARNED",
+      "STAT_REVIEWED",
+      "STAT_GRADUATED",
+      "STAT_TOTAL"
     ],
     "resources": {
       "media": [

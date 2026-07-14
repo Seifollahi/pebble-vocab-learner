@@ -85,6 +85,37 @@ void ui_flash(void) {
 
 // --- Content -----------------------------------------------------------------
 
+// Long terms ("Quintessential", "Perspicacious") don't fit one line of
+// Bitham 30 on a 144px display and were getting clipped. Walk down a font
+// ladder until the word fits on a single line; worst case allow wrapping
+// at the smallest size.
+static void set_term_text_fitted(const char *text) {
+  static const char *ladder[] = {
+    FONT_KEY_BITHAM_30_BLACK,
+    FONT_KEY_GOTHIC_28_BOLD,
+    FONT_KEY_GOTHIC_24_BOLD,
+    FONT_KEY_GOTHIC_18_BOLD,
+  };
+  GRect frame = layer_get_frame(text_layer_get_layer(s_term_layer));
+  GRect probe = GRect(0, 0, frame.size.w, 1000);
+
+  const char *chosen = ladder[ARRAY_LENGTH(ladder) - 1];
+  for (unsigned i = 0; i < ARRAY_LENGTH(ladder); i++) {
+    GFont font = fonts_get_system_font(ladder[i]);
+    // Single line iff the wrapped height equals the height of a 1-char string.
+    GSize one = graphics_text_layout_get_content_size("X", font, probe,
+        GTextOverflowModeWordWrap, GTextAlignmentCenter);
+    GSize all = graphics_text_layout_get_content_size(text, font, probe,
+        GTextOverflowModeWordWrap, GTextAlignmentCenter);
+    if (all.h <= one.h) {
+      chosen = ladder[i];
+      break;
+    }
+  }
+  text_layer_set_font(s_term_layer, fonts_get_system_font(chosen));
+  text_layer_set_text(s_term_layer, text);
+}
+
 // Fit longer definitions: drop from Gothic 24 to Gothic 18 when the text
 // would overflow its box (matters on 144x168 aplite and round chalk).
 static void set_extra_text_fitted(const char *text) {
@@ -114,7 +145,7 @@ void ui_update_display(void) {
   bool show_hints = state_get_launch_count() <= HINT_LAUNCHES;
 
   if (state_is_all_caught_up()) {
-    text_layer_set_text(s_term_layer, "Done!");
+    set_term_text_fitted("Done!");
     format_next_due(s_done_buf, sizeof(s_done_buf));
     set_extra_text_fitted(s_done_buf);
     text_layer_set_text(s_hint_layer, "");
@@ -123,14 +154,14 @@ void ui_update_display(void) {
     // valid until the next vocab_get(), i.e. until the next display update.
     const VocabEntry *e = vocab_get(state_get_current_index());
     if (!e) {
-      text_layer_set_text(s_term_layer, "Error");
+      set_term_text_fitted("Error");
       set_extra_text_fitted("Could not read the vocabulary database.");
       text_layer_set_text(s_hint_layer, "");
       layer_mark_dirty(s_bucket_layer);
       layer_mark_dirty(s_mode_layer);
       return;
     }
-    text_layer_set_text(s_term_layer, e->term);
+    set_term_text_fitted(e->term);
 
     if (!state_is_meaning_revealed()) {
       set_extra_text_fitted("Press SELECT to reveal...");

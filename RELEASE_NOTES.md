@@ -1,3 +1,28 @@
+# Release Notes: v2.2.0
+
+Quality-of-life release: calm timeline, a proper phone app, and no more clipped words.
+
+## What's New in v2.2.0
+
+### 🗓️ Timeline That Doesn't Spam
+- **One pin per day** instead of one per interval. Hourly reminders used to put 24+ pins in your timeline; now a single daily pin carries up to 3 reminder pop-ups.
+- **Waking window**: choose "not before / not after" hours (default 9:00–21:00) so reminders never land at 3 AM.
+- Legacy interval pins from v2.0/v2.1 are cleaned up automatically.
+
+### 📱 A Real Phone App
+- **Live stats on the settings page**: Mastered, Reviewed, and Graduated sync from the watch every time you open the app.
+- **Reset progress**: erase all SRS levels and stats from the settings page (with confirmation).
+- Cleaner sectioned layout: Reminders / Study / Progress / Danger zone.
+
+### ✨ Watch Fixes
+- **Long words fit**: terms like "Quintessential" now auto-shrink through a font ladder instead of clipping with a dash.
+- **New launcher icon**: bold V over the app's progress-dots motif.
+
+### 🧪 Experimental
+- New manual GitHub Actions workflow to build for the Core Devices watches (Core 2 Duo / Core Time 2, a.k.a. flint / gabbro) with the modern SDK.
+
+---
+
 # Release Notes: v2.1.0
 
 This release removes the word-count ceiling. The vocabulary database moved out of the app binary (which is copied into the watch's limited RAM) and into the 256KB resource bank, read on demand — one word in memory at a time.

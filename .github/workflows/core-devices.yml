@@ -1,0 +1,61 @@
+# Experimental: build for the new Core Devices watches (flint = Core 2 Duo,
+# gabbro = Core Time 2) using the modern Python 3 pebble-tool.
+# Run manually from the Actions tab. If this proves reliable it can replace
+# the legacy rebble/pebble-sdk container workflow.
+name: Core Devices Build (experimental)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-core:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install ARM toolchain
+      run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi
+
+    - name: Install pebble-tool (Core Devices)
+      run: |
+        pip install pebble-tool
+        mkdir -p "$HOME/.pebble-sdk"
+        touch "$HOME/.pebble-sdk/NO_TRACKING"
+
+    - name: Install latest SDK core
+      run: yes | pebble sdk install latest
+
+    - name: Add new platforms to targetPlatforms
+      run: |
+        sudo apt-get install -y jq
+        jq '.pebble.targetPlatforms += ["flint", "gabbro"] | .pebble.targetPlatforms |= unique' \
+          package.json > package.json.tmp && mv package.json.tmp package.json
+        cat package.json | jq '.pebble.targetPlatforms'
+
+    - name: Generate vocab resource
+      run: python3 tools/generate_vocab.py
+
+    - name: Build
+      run: pebble build
+
+    - name: Rename artifact
+      run: |
+        for f in build/*.pbw; do
+          mv "$f" build/vocab_learner_core.pbw
+          break
+        done
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: pebble-vocab-learner-core-pbw
+        path: build/*.pbw

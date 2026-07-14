@@ -27,6 +27,9 @@ int state_get_seconds_until_next_due(void);
 int state_get_launch_count(void);
 void state_register_launch(void);
 
+// Erase all SRS progress and lifetime stats (triggered from phone settings)
+void state_reset_progress(void);
+
 void state_set_notification_config(bool enabled, int frequency_mins);
 bool state_get_notification_enabled(void);
 int state_get_notification_frequency(void);
