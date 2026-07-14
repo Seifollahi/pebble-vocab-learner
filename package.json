@@ -54,6 +54,16 @@
           "file": "images/menu_icon.png",
           "menuIcon": true
         }
+      ],
+      "publishedMedia": [
+        {
+          "name": "APP_GLANCE_ICON",
+          "glance": "IMAGE_MENU_ICON",
+          "timeline": {
+            "tiny": "IMAGE_MENU_ICON"
+          },
+          "id": 1
+        }
       ]
     }
   }
