@@ -55,7 +55,7 @@ static int s_due_pool_size = 0;
 
 static bool s_notif_enabled = true;
 static int s_notif_freq = 60;
-static bool s_vibration_enabled = true;
+static bool s_vibration_enabled = false; // haptics off by default
 static bool s_diff_basic = true;
 static bool s_diff_intermediate = true;
 static bool s_diff_advanced = true;

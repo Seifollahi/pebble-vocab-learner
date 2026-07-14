@@ -11,7 +11,7 @@ var DEFAULT_CONFIG = {
   remindersPerDay: 2,   // 1..3 (timeline allows max 3 reminders per pin)
   windowStart: 9,       // reminders only between these hours
   windowEnd: 21,
-  vibration: true,
+  vibration: false, // haptics off by default
   diffBasic: true,
   diffIntermediate: true,
   diffAdvanced: true
